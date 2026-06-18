@@ -1,0 +1,54 @@
+system:
+  mode: paper
+
+broker:
+  active: angelone
+
+strategy:
+  active: multi_confluence
+
+risk:
+  daily_loss_limit_percent: 2
+  daily_profit_lock_percent: 3
+  max_trades_per_day: 5
+  starting_capital: 500000
+
+trading:
+  timeframe: 5m
+  
+
+data:
+  symbol: NIFTY
+  timeframe: 5m
+  storage_path: data/historical/nifty
+
+storage:
+  raw_data_path: data/raw/nifty
+  processed_data_path: data/processed/nifty
+
+market:
+  symbol: NIFTY
+  source_resolution: 1m
+  strategy_resolution: 5m
+
+indicators:
+
+  source_price: open
+  ema_periods:
+    - 5
+    - 9
+    - 21
+    - 54
+    - 200
+
+  rsi_period: 14
+
+  adx_period: 14
+
+  cci_period: 20
+
+capital:
+
+  capital_per_lot: 50000
+
+  total_capital: 500000

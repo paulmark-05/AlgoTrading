@@ -1,0 +1,4 @@
+BUY = "BUY"
+SELL = "SELL"
+EXIT = "EXIT"
+HOLD = "HOLD"

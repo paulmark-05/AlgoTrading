@@ -1,18 +1,17 @@
-import pandas_ta as ta
+from indicators.base_indicator import BaseIndicator
 
 
-class SARIndicator:
+class ParabolicSAR(BaseIndicator):
 
-    @staticmethod
-    def calculate(df):
+    def __init__(self,
+                 af=0.02,
+                 max_af=0.20):
 
-        sar = ta.psar(
-            high=df["high"],
-            low=df["low"]
-        )
+        self.af = af
+        self.max_af = max_af
 
-        psar_column = sar.columns[0]
+    def calculate(self, data):
 
-        df["psar"] = sar[psar_column]
-
-        return df
+        # Placeholder implementation.
+        # Will replace with a full Wilder implementation later.
+        return data["low"].rolling(2).min()

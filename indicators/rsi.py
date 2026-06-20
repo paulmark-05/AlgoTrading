@@ -1,20 +1,25 @@
-from config.settings import settings
+import pandas as pd
 
-import pandas_ta as ta
+from indicators.base_indicator import BaseIndicator
 
 
-class RSIIndicator:
+class RSI(BaseIndicator):
 
-    @staticmethod
-    def calculate(df, length=14):
+    def __init__(self, period=14):
+        self.period = period
 
-        df = df.copy()
+    def calculate(self, data):
 
-        source = settings.get_indicator_source()
+        delta = data["close"].diff()
 
-        df[f"rsi_{length}"] = ta.rsi(
-            df[source],
-            length=length
-        )
+        gain = delta.clip(lower=0)
 
-        return df
+        loss = -delta.clip(upper=0)
+
+        avg_gain = gain.rolling(self.period).mean()
+
+        avg_loss = loss.rolling(self.period).mean()
+
+        rs = avg_gain / avg_loss
+
+        return 100 - (100 / (1 + rs))

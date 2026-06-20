@@ -1,25 +1,31 @@
-import pandas_ta as ta
+from indicators.base_indicator import BaseIndicator
+from indicators.atr import ATR
 
 
-class SupertrendIndicator:
+class SuperTrend(BaseIndicator):
 
-    @staticmethod
-    def calculate(
-        df,
-        length=10,
+    def __init__(
+        self,
+        period=10,
         multiplier=3
     ):
 
-        st = ta.supertrend(
-            high=df["high"],
-            low=df["low"],
-            close=df["close"],
-            length=length,
-            multiplier=multiplier
-        )
+        self.multiplier = multiplier
+        self.atr = ATR(period)
 
-        df[f"supertrend_{length}_{multiplier}"] = st.iloc[:, 0]
+    def calculate(self, data):
 
-        df[f"supertrend_direction_{length}_{multiplier}"] = st.iloc[:, 1]
+        atr = self.atr.calculate(data)
 
-        return df
+        hl2 = (
+            data["high"] +
+            data["low"]
+        ) / 2
+
+        upper = hl2 + self.multiplier * atr
+        lower = hl2 - self.multiplier * atr
+
+        return {
+            "upper_band": upper,
+            "lower_band": lower
+        }

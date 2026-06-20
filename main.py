@@ -1,10 +1,5 @@
-from core.application import (
-    Application
-)
+from app.bootstrap import run
 
 
-app = Application()
-
-app.initialize()
-
-app.run()
+if __name__ == "__main__":
+    run()

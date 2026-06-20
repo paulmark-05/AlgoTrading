@@ -1,30 +1,33 @@
-import yaml
+"""
+Application-wide settings.
 
-class Settings:
+Only global application configuration belongs here.
+Do NOT place strategy-specific parameters in this file.
+"""
 
-    def __init__(self, file_path="settings.yaml"):
+from dataclasses import dataclass
+from pathlib import Path
 
-        with open(file_path, "r") as file:
-            self.config = yaml.safe_load(file)
 
-    def get(self, section, key):
+@dataclass(frozen=True)
+class AppSettings:
+    APP_NAME: str = "Trading Platform"
 
-        return self.config[section][key]
+    DEFAULT_SYMBOL: str = "NIFTY"
 
-    def get_ema_periods(self):
+    DEFAULT_TIMEFRAME: str = "5m"
 
-        return self.config["indicators"]["ema_periods"]
+    TIMEZONE: str = "Asia/Kolkata"
 
-    def get_indicator_source(self):
+    INITIAL_CAPITAL: float = 100000.0
 
-        return self.config["indicators"]["source_price"]
+    PROJECT_ROOT: Path = Path(__file__).resolve().parent.parent
 
-    def get_symbol(self):
+    DATA_DIR: Path = PROJECT_ROOT / "data"
 
-        return self.config["market"]["symbol"]
+    LOG_DIR: Path = PROJECT_ROOT / "logs"
 
-    def get_lot_size(self):
+    REPORT_DIR: Path = PROJECT_ROOT / "reports"
 
-        return self.config["trading"]["lot_size"]
 
-settings = Settings()
+SETTINGS = AppSettings()

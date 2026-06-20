@@ -1,28 +1,23 @@
-import pandas as pd
+from indicators.base_indicator import BaseIndicator
 
 
-class VWAPIndicator:
+class VWAP(BaseIndicator):
 
-    @staticmethod
-    def calculate(df):
+    def calculate(self, data):
 
         typical_price = (
-            df["high"] +
-            df["low"] +
-            df["close"]
+            data["high"] +
+            data["low"] +
+            data["close"]
         ) / 3
 
         cumulative_tp_vol = (
-            typical_price * df["volume"]
+            typical_price *
+            data["volume"]
         ).cumsum()
 
         cumulative_volume = (
-            df["volume"]
+            data["volume"]
         ).cumsum()
 
-        df["vwap"] = (
-            cumulative_tp_vol /
-            cumulative_volume
-        )
-
-        return df
+        return cumulative_tp_vol / cumulative_volume

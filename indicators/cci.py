@@ -1,30 +1,28 @@
-import pandas as pd
+from indicators.base_indicator import BaseIndicator
 
 
-class CCIIndicator:
+class CCI(BaseIndicator):
 
-    @staticmethod
-    def calculate(df, length=20):
+    def __init__(self, period=20):
+
+        self.period = period
+
+    def calculate(self, data):
 
         tp = (
-            df["high"] +
-            df["low"] +
-            df["close"]
+            data["high"] +
+            data["low"] +
+            data["close"]
         ) / 3
 
-        sma_tp = tp.rolling(length).mean()
+        sma = tp.rolling(self.period).mean()
 
-        mean_dev = tp.rolling(length).apply(
-            lambda x: abs(x - x.mean()).mean(),
-            raw=True
-        )
+        md = (
+            tp - sma
+        ).abs().rolling(self.period).mean()
 
         cci = (
-            tp - sma_tp
-        ) / (
-            0.015 * mean_dev
-        )
+            tp - sma
+        ) / (0.015 * md)
 
-        df[f"cci_{length}"] = cci
-
-        return df
+        return cci

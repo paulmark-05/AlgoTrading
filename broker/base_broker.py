@@ -1,19 +1,18 @@
-from abc import ABC
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 
 
 class BaseBroker(ABC):
 
     @abstractmethod
-    def place_order(
-        self,
-        trade_intent
-    ):
+    def connect(self):
         pass
 
     @abstractmethod
-    def close_position(
+    def place_order(
         self,
-        position
+        symbol,
+        side,
+        quantity,
+        order_type="MARKET"
     ):
         pass

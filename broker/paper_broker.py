@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 from typing import Dict
+from uuid import uuid4
 
 from broker.enums import OrderSide
 from broker.order import Order
@@ -187,11 +188,11 @@ class PaperBroker:
             order_id=order.order_id,
             execution_type=execution_type,
             symbol=order.symbol,
-            side=order.side,
-            quantity=quantity,
-            price=price,
-            commission=commission,
-            message=message,
+            side=order.side.value,
+            quantity=int(quantity),
+            price=Decimal(price),
+            commission=Decimal(commission),
+            notes=message,
         )
 
         self.execution_reports.append(report)
@@ -271,7 +272,7 @@ class PaperBroker:
 
         self._create_execution_report(
             order=order,
-            execution_type=ExecutionType.NEW,
+            execution_type=ExecutionType.FILL,
             quantity=Decimal("0"),
             price=Decimal("0"),
             commission=Decimal("0"),
@@ -329,18 +330,6 @@ class PaperBroker:
     ) -> Trade:
         """
         Execute all or part of an order.
-
-        Parameters
-        ----------
-        order
-            Order being executed.
-
-        execution_price
-            Fill price.
-
-        quantity
-            Quantity to execute. If omitted the broker executes
-            the entire remaining quantity.
         """
 
         execution_price = Decimal(execution_price)
@@ -364,42 +353,29 @@ class PaperBroker:
             quantity,
         )
 
-        #
-        # Update the order.
-        #
-
         order.add_execution(
-            quantity=quantity,
+            quantity=int(quantity),
             price=execution_price,
             commission=commission,
         )
 
-        #
-        # Create trade.
-        #
-
         trade = Trade(
+            trade_id=uuid4().hex,
+            order_id=order.order_id,
             symbol=order.symbol,
             side=order.side,
-            quantity=quantity,
+            quantity=int(quantity),
             price=execution_price,
+            commission=commission,
         )
 
         self.trade_book.add(
             trade,
         )
 
-        #
-        # Update portfolio.
-        #
-
         self.portfolio.apply_trade(
             trade,
         )
-
-        #
-        # Record execution.
-        #
 
         if order.is_filled:
 
@@ -560,7 +536,7 @@ class PaperBroker:
 
         self._create_execution_report(
             order=order,
-            execution_type=ExecutionType.CANCELLED,
+            execution_type=ExecutionType.CANCEL,
             quantity=Decimal("0"),
             price=Decimal("0"),
             commission=Decimal("0"),
@@ -577,7 +553,7 @@ class PaperBroker:
 
             self._create_execution_report(
                 order=order,
-                execution_type=ExecutionType.CANCELLED,
+                execution_type=ExecutionType.CANCEL,
                 quantity=Decimal("0"),
                 price=Decimal("0"),
                 commission=Decimal("0"),

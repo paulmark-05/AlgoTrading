@@ -104,27 +104,16 @@ class OrderBook:
             if order.symbol == symbol
         ]
 
-    def open_orders(
-        self,
-        symbol: str | None = None,
-    ) -> List[Order]:
+    def open_orders(self) -> list[Order]:
 
-        orders = [
+        return [
             order
             for order in self._orders.values()
             if order.status in (
                 OrderStatus.PENDING,
+                OrderStatus.OPEN,
                 OrderStatus.PARTIALLY_FILLED,
             )
-        ]
-
-        if symbol is None:
-            return orders
-
-        return [
-            order
-            for order in orders
-            if order.symbol == symbol
         ]
 
     def completed_orders(self) -> List[Order]:

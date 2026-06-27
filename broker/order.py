@@ -8,32 +8,13 @@ including partial fills and execution history.
 
 from __future__ import annotations
 
+from broker.enums import OrderSide, OrderStatus, OrderType
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
-from enum import Enum
+
 from typing import Optional
 from uuid import uuid4
-
-class OrderSide(Enum):
-    BUY = "BUY"
-    SELL = "SELL"
-
-
-class OrderType(Enum):
-    MARKET = "MARKET"
-    LIMIT = "LIMIT"
-    STOP = "STOP"
-    STOP_LIMIT = "STOP_LIMIT"
-
-
-class OrderStatus(Enum):
-    PENDING = "PENDING"
-    ACCEPTED = "ACCEPTED"
-    PARTIALLY_FILLED = "PARTIALLY_FILLED"
-    FILLED = "FILLED"
-    CANCELLED = "CANCELLED"
-    REJECTED = "REJECTED"
 
 
 @dataclass(slots=True)
@@ -131,24 +112,24 @@ class Order:
             )
 
         if (
-            self.order_type == OrderType.STOP
+            self.order_type == OrderType.SL
             and self.stop_price is None
         ):
             raise ValueError(
-                "Stop orders require a stop price."
+                "SL orders require a stop price."
             )
 
         if (
-            self.order_type == OrderType.STOP_LIMIT
+            self.order_type == OrderType.SLM
         ):
             if self.price is None:
                 raise ValueError(
-                    "Stop-limit orders require a limit price."
+                    "SLM orders require a limit price."
                 )
 
             if self.stop_price is None:
                 raise ValueError(
-                    "Stop-limit orders require a stop price."
+                    "SLM orders require a stop price."
                 )
 
         if self.price is not None:
@@ -238,7 +219,7 @@ class Order:
         """
         return self.status in (
             OrderStatus.PENDING,
-            OrderStatus.ACCEPTED,
+            OrderStatus.OPEN,
             OrderStatus.PARTIALLY_FILLED,
         )
 
@@ -288,7 +269,7 @@ class Order:
                 "Only pending orders may be accepted."
             )
 
-        self.status = OrderStatus.ACCEPTED
+        self.status = OrderStatus.OPEN
         self.accepted_time = datetime.now(
             timezone.utc
         )

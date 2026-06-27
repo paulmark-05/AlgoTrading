@@ -39,6 +39,7 @@ class Portfolio:
             )
 
         self._positions: dict[str, Position] = {}
+        self._realized_pnl = Decimal("0")
 
     # ---------------------------------------------------------
     # Trade Processing
@@ -66,6 +67,7 @@ class Portfolio:
             self._cash += trade.net_value
 
         if position.quantity == 0:
+            self._realized_pnl += position.realized_pnl
             del self._positions[trade.symbol]
 
     # ---------------------------------------------------------
@@ -168,13 +170,15 @@ class Portfolio:
     @property
     def realized_pnl(self) -> Decimal:
 
-        return sum(
+        open_position_pnl = sum(
             (
                 position.realized_pnl
                 for position in self._positions.values()
             ),
             start=Decimal("0"),
         )
+
+        return self._realized_pnl + open_position_pnl
 
     @property
     def total_pnl(self) -> Decimal:
@@ -191,6 +195,7 @@ class Portfolio:
     def reset(self) -> None:
 
         self._positions.clear()
+        self._realized_pnl = Decimal("0")
 
     def __len__(self) -> int:
 

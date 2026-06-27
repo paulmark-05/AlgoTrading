@@ -13,34 +13,17 @@ from broker.portfolio import Portfolio
 
 
 class DummyBroker(BaseBroker):
-    """
-    Minimal concrete implementation used solely for testing
-    BaseBroker.
-    """
-
     def __init__(self):
         self._connected = False
         self._portfolio = Portfolio(
             initial_cash=Decimal("10000")
         )
 
-    # --------------------------------------------------
-    # Connection
-    # --------------------------------------------------
-
-    def connect(self):
+    def connect(self) -> None:
         self._connected = True
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         self._connected = False
-
-    @property
-    def is_connected(self):
-        return self._connected
-
-    # --------------------------------------------------
-    # Orders
-    # --------------------------------------------------
 
     def place_order(
         self,
@@ -57,111 +40,84 @@ class DummyBroker(BaseBroker):
     def get_order(
         self,
         order_id: str,
-    ):
+    ) -> Order | None:
         return None
 
-    def get_open_orders(self):
+    def get_open_orders(self) -> list[Order]:
         return []
 
-    # --------------------------------------------------
-    # Portfolio
-    # --------------------------------------------------
-
     @property
-    def portfolio(self):
+    def portfolio(self) -> Portfolio:
         return self._portfolio
-
-    # --------------------------------------------------
-    # Market Data
-    # --------------------------------------------------
 
     def update_market_price(
         self,
-        symbol,
-        price,
-    ):
-        pass
+        symbol: str,
+        price: Decimal | float | int,
+    ) -> None:
+        return None
 
-
-# ======================================================
-# Tests
-# ======================================================
+    @property
+    def is_connected(self) -> bool:
+        return self._connected
 
 
 def test_base_broker_is_abstract():
-    """
-    BaseBroker should not be instantiable.
-    """
-
     with pytest.raises(TypeError):
         BaseBroker()
 
 
-def test_connect_disconnect():
+def test_dummy_broker_can_be_instantiated():
+    broker = DummyBroker()
+    assert broker is not None
 
+
+def test_connect_disconnect():
     broker = DummyBroker()
 
     assert broker.is_connected is False
 
     broker.connect()
-
     assert broker.is_connected is True
 
     broker.disconnect()
-
     assert broker.is_connected is False
 
 
-def test_cash_property():
-
+def test_cash_property_delegates_to_portfolio():
     broker = DummyBroker()
 
     assert broker.cash == Decimal("10000")
 
 
-def test_positions_property():
-
+def test_positions_property_delegates_to_portfolio():
     broker = DummyBroker()
 
     assert broker.positions == {}
 
 
-def test_portfolio_property():
-
+def test_get_order_returns_none_for_missing_order():
     broker = DummyBroker()
 
-    assert isinstance(
-        broker.portfolio,
-        Portfolio,
-    )
+    assert broker.get_order("UNKNOWN") is None
 
 
 def test_get_open_orders_returns_empty_list():
-
     broker = DummyBroker()
 
     assert broker.get_open_orders() == []
 
 
-def test_get_order_returns_none():
-
+def test_cancel_unknown_order_returns_false():
     broker = DummyBroker()
 
-    assert broker.get_order("ABC") is None
-
-
-def test_cancel_order_returns_false():
-
-    broker = DummyBroker()
-
-    assert broker.cancel_order("ABC") is False
+    assert broker.cancel_order("UNKNOWN") is False
 
 
 def test_update_market_price_does_not_raise():
-
     broker = DummyBroker()
 
     broker.update_market_price(
-        "AAPL",
-        Decimal("185.25"),
+        "NIFTY",
+        Decimal("22500"),
     )

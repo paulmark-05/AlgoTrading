@@ -1,0 +1,3 @@
+class SignalEngine:
+
+    pass

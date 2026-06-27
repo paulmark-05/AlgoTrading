@@ -1,31 +1,31 @@
-from config.settings import settings
-
-import pandas_ta as ta
+from indicators.base_indicator import BaseIndicator
 
 
-class MACDIndicator:
+class MACD(BaseIndicator):
 
-    @staticmethod
-    def calculate(
-        df,
-        fast=12,
-        slow=26,
-        signal=9
-    ):
+    def calculate(self, data):
 
-        df = df.copy()
+        ema12 = data["close"].ewm(
+            span=12,
+            adjust=False
+        ).mean()
 
-        source = settings.get_indicator_source()
+        ema26 = data["close"].ewm(
+            span=26,
+            adjust=False
+        ).mean()
 
-        macd = ta.macd(
-            df[source],
-            fast=fast,
-            slow=slow,
-            signal=signal
-        )
+        macd = ema12 - ema26
 
-        df["macd"] = macd.iloc[:, 0]
-        df["macd_histogram"] = macd.iloc[:, 1]
-        df["macd_signal"] = macd.iloc[:, 2]
+        signal = macd.ewm(
+            span=9,
+            adjust=False
+        ).mean()
 
-        return df
+        histogram = macd - signal
+
+        return {
+            "macd": macd,
+            "signal": signal,
+            "histogram": histogram,
+        }

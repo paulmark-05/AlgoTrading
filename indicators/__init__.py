@@ -1,1 +1,3 @@
-self.indicators = IndicatorManager()
+"""
+Indicators package.
+"""

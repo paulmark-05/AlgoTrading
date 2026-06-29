@@ -9,7 +9,6 @@ from indicators.registry import IndicatorRegistry
 class IndicatorManager:
 
     def __init__(self) -> None:
-
         self._registry = IndicatorRegistry()
 
     @property
@@ -20,7 +19,6 @@ class IndicatorManager:
         self,
         indicator: BaseIndicator,
     ) -> None:
-
         self._registry.add(indicator)
 
     def calculate(
@@ -31,11 +29,9 @@ class IndicatorManager:
         results = {}
 
         for indicator in self._registry.all():
-
             results[indicator.name] = indicator.calculate(data)
 
         return results
 
-    def clear(self):
-
+    def clear(self) -> None:
         self._registry.clear()

@@ -1,10 +1,32 @@
 """
-Bootstrap module.
+base_indicator.py
+
+Abstract base class for all technical indicators.
 """
 
-from app.application import Application
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+
+import pandas as pd
 
 
-def run():
-    app = Application(config={})
-    app.start()
+class BaseIndicator(ABC):
+
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        """
+        Indicator name.
+        """
+        ...
+
+    @abstractmethod
+    def calculate(
+        self,
+        data: pd.DataFrame,
+    ) -> pd.Series:
+        """
+        Calculate indicator values.
+        """
+        ...

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pandas as pd
 
 from indicators.base_indicator import BaseIndicator
@@ -5,21 +7,40 @@ from indicators.base_indicator import BaseIndicator
 
 class RSI(BaseIndicator):
 
-    def __init__(self, period=14):
+    def __init__(self, period: int = 14) -> None:
+
+        if period <= 0:
+            raise ValueError("RSI period must be positive.")
+
         self.period = period
 
-    def calculate(self, data):
+    @property
+    def name(self) -> str:
+        return f"RSI_{self.period}"
+
+    def calculate(
+        self,
+        data: pd.DataFrame,
+    ) -> pd.Series:
+
+        if "close" not in data.columns:
+            raise ValueError("Data must contain close column.")
 
         delta = data["close"].diff()
 
         gain = delta.clip(lower=0)
-
         loss = -delta.clip(upper=0)
 
-        avg_gain = gain.rolling(self.period).mean()
+        average_gain = gain.rolling(
+            window=self.period
+        ).mean()
 
-        avg_loss = loss.rolling(self.period).mean()
+        average_loss = loss.rolling(
+            window=self.period
+        ).mean()
 
-        rs = avg_gain / avg_loss
+        rs = average_gain / average_loss
 
-        return 100 - (100 / (1 + rs))
+        return 100 - (
+            100 / (1 + rs)
+        )

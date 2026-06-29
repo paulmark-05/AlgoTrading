@@ -1,77 +1,37 @@
+from __future__ import annotations
+
+from decimal import Decimal
+
+import pandas as pd
+
+
 class EquityCurve:
 
-    @staticmethod
-    def generate(trades):
+    def __init__(self) -> None:
+        self._records: list[dict] = []
 
-        equity = []
+    def add(
+        self,
+        *,
+        timestamp,
+        equity: Decimal | float | int,
+    ) -> None:
 
-        running_equity = 0
+        equity = Decimal(equity)
 
-        peak = 0
+        self._records.append(
+            {
+                "timestamp": timestamp,
+                "equity": equity,
+            }
+        )
 
-        max_drawdown = 0
+    def to_frame(self) -> pd.DataFrame:
 
-        consecutive_wins = 0
-        consecutive_losses = 0
+        return pd.DataFrame(self._records)
 
-        max_consecutive_wins = 0
-        max_consecutive_losses = 0
+    def clear(self) -> None:
+        self._records.clear()
 
-        for trade in trades:
-
-            pnl = trade["pnl_points"]
-
-            running_equity += pnl
-
-            equity.append(running_equity)
-
-            # Peak tracking
-
-            if running_equity > peak:
-
-                peak = running_equity
-
-            drawdown = peak - running_equity
-
-            if drawdown > max_drawdown:
-
-                max_drawdown = drawdown
-
-            # Win streak
-
-            if pnl > 0:
-
-                consecutive_wins += 1
-
-                consecutive_losses = 0
-
-            elif pnl < 0:
-
-                consecutive_losses += 1
-
-                consecutive_wins = 0
-
-            max_consecutive_wins = max(
-                max_consecutive_wins,
-                consecutive_wins
-            )
-
-            max_consecutive_losses = max(
-                max_consecutive_losses,
-                consecutive_losses
-            )
-
-        return {
-
-            "max_drawdown":
-                round(
-                    max_drawdown,
-                    2
-                ),
-
-            "max_consecutive_wins":
-                max_consecutive_wins,
-
-            "max_consecutive_losses":
-                max_consecutive_losses
-        }
+    def __len__(self) -> int:
+        return len(self._records)

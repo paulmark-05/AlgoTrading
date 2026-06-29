@@ -1,44 +1,53 @@
+from __future__ import annotations
+
+import pandas as pd
+
+from broker.paper_broker import PaperBroker
+from engine.signal_to_order import SignalToOrder
+from engine.strategy_engine import StrategyEngine
+from strategy.signal import Signal
+
+
 class TradingEngine:
 
     def __init__(
-
         self,
+        strategy_engine: StrategyEngine,
+        broker: PaperBroker,
+        signal_to_order: SignalToOrder | None = None,
+    ) -> None:
 
-        strategy,
-
-        broker,
-
-        portfolio
-    ):
-
-        self.strategy = strategy
-
+        self.strategy_engine = strategy_engine
         self.broker = broker
+        self.signal_to_order = (
+            signal_to_order or SignalToOrder()
+        )
 
-        self.portfolio = portfolio
-
-    def on_candle(
-
+    def run_once(
         self,
+        *,
+        strategy_name: str,
+        symbol: str,
+        data: pd.DataFrame,
+        quantity: int,
+        market_price,
+    ) -> Signal:
 
-        df,
-
-        i
-    ):
-
-        signal = self.strategy.evaluate(
-            df,
-            i
+        signal = self.strategy_engine.run(
+            strategy_name=strategy_name,
+            symbol=symbol,
+            data=data,
         )
 
-        if signal is None:
-
-            return
-
-        position = self.broker.place_order(
-            signal
+        order = self.signal_to_order.convert(
+            signal,
+            quantity=quantity,
         )
 
-        self.portfolio.add_position(
-            position
-        )
+        if order is not None:
+            self.broker.submit_order(
+                order,
+                market_price=market_price,
+            )
+
+        return signal

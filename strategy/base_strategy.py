@@ -3,7 +3,7 @@ base_strategy.py
 
 Abstract strategy interface.
 
-A strategy receives market data and produces a Signal.
+A strategy receives StrategyContext and produces a Signal.
 
 Strategies never interact with brokers directly.
 """
@@ -14,6 +14,7 @@ from abc import ABC, abstractmethod
 
 import pandas as pd
 
+from strategy.context import StrategyContext
 from strategy.signal import Signal
 
 
@@ -53,11 +54,12 @@ class BaseStrategy(ABC):
         return self._symbol
 
     @abstractmethod
-    generate_signal(
-        context: StrategyContext
-    ) -> Signal
+    def generate_signal(
+        self,
+        context: StrategyContext,
+    ) -> Signal:
         """
-        Generate one trading signal from market data.
+        Generate one trading signal from strategy context.
         """
         ...
 
@@ -86,6 +88,18 @@ class BaseStrategy(ABC):
             raise ValueError(
                 "Market data is empty."
             )
+
+    def validate_context(
+        self,
+        context: StrategyContext,
+    ) -> None:
+
+        if context.symbol != self.symbol:
+            raise ValueError(
+                "Context symbol does not match strategy symbol."
+            )
+
+        self.validate_data(context.data)
 
     def __repr__(self) -> str:
 

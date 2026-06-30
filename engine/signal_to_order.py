@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from broker.enums import OrderSide, OrderType
+from broker.enums import OrderSide
 from broker.order import Order
+from engine.order_request import OrderRequest
 from strategy.signal import Signal, SignalSide
 
 
@@ -10,16 +11,15 @@ class SignalToOrder:
     def convert(
         self,
         signal: Signal,
-        quantity: int,
-        order_type: OrderType = OrderType.MARKET,
+        request: OrderRequest,
     ) -> Order | None:
 
         if signal.is_hold:
             return None
 
-        if quantity <= 0:
+        if signal.symbol != request.symbol:
             raise ValueError(
-                "Order quantity must be positive."
+                "Signal symbol does not match order request symbol."
             )
 
         if signal.side == SignalSide.BUY:
@@ -34,9 +34,7 @@ class SignalToOrder:
         return Order(
             symbol=signal.symbol,
             side=side,
-            quantity=quantity,
-            order_type=order_type,
-            price=signal.price
-            if order_type == OrderType.LIMIT
-            else None,
+            quantity=request.quantity,
+            order_type=request.order_type,
+            price=request.price,
         )

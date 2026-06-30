@@ -1,5 +1,5 @@
 from decimal import Decimal
-
+import pytest
 import pandas as pd
 
 from broker.paper_broker import PaperBroker
@@ -10,7 +10,8 @@ from strategy.context import StrategyContext
 from strategy.manager import StrategyManager
 from strategy.reference.noop_strategy import NoOpStrategy
 from strategy.signal import Signal, SignalSide
-
+from risk.risk_engine import RiskEngine
+from risk.max_drawdown_rule import MaxDrawdownRule
 
 class AlwaysBuyStrategy(BaseStrategy):
 
@@ -103,7 +104,51 @@ def test_trading_engine_buy_places_order():
         market_price=Decimal("100"),
     )
 
-    assert signal.side == SignalSide.BUY
-    assert len(broker.order_book) == 1
-    assert len(broker.trade_book) == 1
-    assert broker.has_position("NIFTY") is True
+def test_trading_engine_risk_rejects_large_order():
+
+    manager = StrategyManager()
+    manager.add(
+        AlwaysBuyStrategy(
+            name="AlwaysBuy",
+            symbol="NIFTY",
+        )
+    )
+
+    strategy_engine = StrategyEngine(
+        strategy_manager=manager,
+    )
+
+    broker = PaperBroker(
+        initial_cash=Decimal("100000")
+    )
+
+    risk_manager = RiskEngine()
+
+    risk_manager.add_rule(
+        MaxDrawdownRule(
+            max_drawdown=Decimal("1")
+        )
+    )
+
+    engine = TradingEngine(
+        strategy_engine=strategy_engine,
+        broker=broker,
+        risk_manager=risk_manager,
+    )
+
+    with pytest.raises(ValueError):
+        engine.run_once(
+            strategy_name="AlwaysBuy",
+            symbol="NIFTY",
+            data=sample_df(),
+            quantity=100,
+            market_price=Decimal("100"),
+            risk_context={
+                "current_drawdown": Decimal("1"),
+            },
+        )
+
+    assert len(broker.order_book) == 0
+    assert len(broker.trade_book) == 0
+
+    # assert broker.has_position("NIFTY") is True

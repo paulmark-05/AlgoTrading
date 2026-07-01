@@ -10,7 +10,7 @@ from reporting.json_reporter import JSONReporter
 from reporting.markdown_reporter import MarkdownReporter
 from reporting.report_bundle import ReportBundle
 from reporting.report_manager import ReportManager
-
+from reporting.excel_reporter import ExcelReporter
 
 def snapshot():
 
@@ -46,6 +46,7 @@ def test_report_bundle_exports_everything(tmp_path):
     manager.add(CSVReporter())
     manager.add(HTMLReporter())
     manager.add(MarkdownReporter())
+    manager.add(ExcelReporter())
 
     bundle = ReportBundle(manager)
 
@@ -71,7 +72,7 @@ def test_report_bundle_exports_everything(tmp_path):
         output_directory=tmp_path,
     )
 
-    assert len(paths) == 7
+    assert len(paths) == 8
 
     assert (tmp_path / "report.json").exists()
     assert (tmp_path / "report.csv").exists()
@@ -81,3 +82,4 @@ def test_report_bundle_exports_everything(tmp_path):
     assert (tmp_path / "equity_curve.csv").exists()
     assert (tmp_path / "trades.csv").exists()
     assert (tmp_path / "config.json").exists()
+    assert (tmp_path / "report.xlsx").exists()

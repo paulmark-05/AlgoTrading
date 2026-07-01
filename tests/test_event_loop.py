@@ -10,7 +10,8 @@ from engine.strategy_engine import StrategyEngine
 from engine.trading_engine import TradingEngine
 from strategy.manager import StrategyManager
 from strategy.reference.noop_strategy import NoOpStrategy
-
+from analytics.performance_tracker import PerformanceTracker
+from engine.performance_recorder import PerformanceRecorder
 
 def sample_df():
 
@@ -102,6 +103,56 @@ def test_empty_bus_returns_zero():
         event_bus=bus,
         trading_engine=trading_engine,
     )
+
+def test_event_loop_records_performance():
+
+    manager = StrategyManager()
+    manager.add(
+        NoOpStrategy(symbol="NIFTY")
+    )
+
+    strategy_engine = StrategyEngine(
+        strategy_manager=manager,
+    )
+
+    broker = PaperBroker(
+        initial_cash=Decimal("100000")
+    )
+
+    trading_engine = TradingEngine(
+        strategy_engine=strategy_engine,
+        broker=broker,
+    )
+
+    tracker = PerformanceTracker()
+
+    recorder = PerformanceRecorder(
+        tracker=tracker,
+    )
+
+    bus = EventBus()
+
+    bus.publish(
+        MarketEvent(
+            symbol="NIFTY",
+            data=sample_df(),
+        )
+    )
+
+    loop = EventLoop(
+        event_bus=bus,
+        trading_engine=trading_engine,
+        performance_recorder=recorder,
+    )
+
+    processed = loop.run(
+        strategy_name="NoOpStrategy",
+        quantity=10,
+    )
+
+    assert processed == 1
+    assert len(tracker) == 1
+    assert tracker.latest().total_value == Decimal("100000")
 
     assert loop.run(
         strategy_name="NoOpStrategy",

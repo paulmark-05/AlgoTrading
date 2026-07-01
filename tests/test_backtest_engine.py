@@ -52,13 +52,14 @@ def test_backtest_engine_runs_all_rows():
         trading_engine=trading_engine,
     )
 
-    processed = backtest.run(
+    result = backtest.run(
         strategy_name="NoOpStrategy",
         symbol="NIFTY",
         data=sample_df(),
         quantity=10,
     )
 
-    assert processed == 3
+    assert result.bars_processed == 3
+    assert len(result.performance) == 3
     assert len(broker.order_book) == 0
     assert len(broker.trade_book) == 0

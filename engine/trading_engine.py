@@ -40,7 +40,7 @@ class TradingEngine:
         risk_context: dict | None = None,
     ) -> Signal:
 
-        market_price = Decimal(market_price)
+        market_price = Decimal(str(market_price))
 
         signal = self.strategy_engine.run(
             strategy_name=strategy_name,

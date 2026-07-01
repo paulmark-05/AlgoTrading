@@ -1,0 +1,230 @@
+[33mcommit 67a2bc39ffd750e2ea77be9bde94f64050d3d44f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: paulmark-05 <nayanipaul.24@gmail.com>
+Date:   Tue Jun 30 06:23:35 2026 +0530
+
+    Risk module completed
+
+[1mdiff --git a/engine/order_request.py b/engine/order_request.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..857fdff[m
+[1m--- /dev/null[m
+[1m+++ b/engine/order_request.py[m
+[36m@@ -0,0 +1,49 @@[m
+[32m+[m[32mfrom __future__ import annotations[m
+[32m+[m
+[32m+[m[32mfrom dataclasses import dataclass[m
+[32m+[m[32mfrom decimal import Decimal[m
+[32m+[m
+[32m+[m[32mfrom broker.enums import OrderType[m
+[32m+[m
+[32m+[m
+[32m+[m[32m@dataclass(frozen=True, slots=True)[m
+[32m+[m[32mclass OrderRequest:[m
+[32m+[m[32m    symbol: str[m
+[32m+[m[32m    quantity: int[m
+[32m+[m[32m    order_type: OrderType = OrderType.MARKET[m
+[32m+[m[32m    price: Decimal | None = None[m
+[32m+[m
+[32m+[m[32m    def __post_init__(self) -> None:[m
+[32m+[m
+[32m+[m[32m        symbol = self.symbol.upper().strip()[m
+[32m+[m
+[32m+[m[32m        if not symbol:[m
+[32m+[m[32m            raise ValueError([m
+[32m+[m[32m                "OrderRequest symbol cannot be empty."[m
+[32m+[m[32m            )[m
+[32m+[m
+[32m+[m[32m        if self.quantity <= 0:[m
+[32m+[m[32m            raise ValueError([m
+[32m+[m[32m                "OrderRequest quantity must be positive."[m
+[32m+[m[32m            )[m
+[32m+[m
+[32m+[m[32m        if self.price is not None:[m
+[32m+[m
+[32m+[m[32m            price = Decimal(self.price)[m
+[32m+[m
+[32m+[m[32m            if price <= 0:[m
+[32m+[m[32m                raise ValueError([m
+[32m+[m[32m                    "OrderRequest price must be positive."[m
+[32m+[m[32m                )[m
+[32m+[m
+[32m+[m[32m            object.__setattr__([m
+[32m+[m[32m                self,[m
+[32m+[m[32m                "price",[m
+[32m+[m[32m                price,[m
+[32m+[m[32m            )[m
+[32m+[m
+[32m+[m[32m        object.__setattr__([m
+[32m+[m[32m            self,[m
+[32m+[m[32m            "symbol",[m
+[32m+[m[32m            symbol,[m
+[32m+[m[32m        )[m
+\ No newline at end of file[m
+[1mdiff --git a/engine/signal_to_order.py b/engine/signal_to_order.py[m
+[1mindex 37f643d..835a143 100644[m
+[1m--- a/engine/signal_to_order.py[m
+[1m+++ b/engine/signal_to_order.py[m
+[36m@@ -1,7 +1,8 @@[m
+ from __future__ import annotations[m
+ [m
+[31m-from broker.enums import OrderSide, OrderType[m
+[32m+[m[32mfrom broker.enums import OrderSide[m
+ from broker.order import Order[m
+[32m+[m[32mfrom engine.order_request import OrderRequest[m
+ from strategy.signal import Signal, SignalSide[m
+ [m
+ [m
+[36m@@ -10,16 +11,15 @@[m [mclass SignalToOrder:[m
+     def convert([m
+         self,[m
+         signal: Signal,[m
+[31m-        quantity: int,[m
+[31m-        order_type: OrderType = OrderType.MARKET,[m
+[32m+[m[32m        request: OrderRequest,[m
+     ) -> Order | None:[m
+ [m
+         if signal.is_hold:[m
+             return None[m
+ [m
+[31m-        if quantity <= 0:[m
+[32m+[m[32m        if signal.symbol != request.symbol:[m
+             raise ValueError([m
+[31m-                "Order quantity must be positive."[m
+[32m+[m[32m                "Signal symbol does not match order request symbol."[m
+             )[m
+ [m
+         if signal.side == SignalSide.BUY:[m
+[36m@@ -34,9 +34,7 @@[m [mclass SignalToOrder:[m
+         return Order([m
+             symbol=signal.symbol,[m
+             side=side,[m
+[31m-            quantity=quantity,[m
+[31m-            order_type=order_type,[m
+[31m-            price=signal.price[m
+[31m-            if order_type == OrderType.LIMIT[m
+[31m-            else None,[m
+[32m+[m[32m            quantity=request.quantity,[m
+[32m+[m[32m            order_type=request.order_type,[m
+[32m+[m[32m            price=request.price,[m
+         )[m
+\ No newline at end of file[m
+[1mdiff --git a/engine/trading_engine.py b/engine/trading_engine.py[m
+[1mindex 918735f..01ee700 100644[m
+[1m--- a/engine/trading_engine.py[m
+[1m+++ b/engine/trading_engine.py[m
+[36m@@ -1,10 +1,14 @@[m
+ from __future__ import annotations[m
+ [m
+[32m+[m[32mfrom decimal import Decimal[m
+[32m+[m
+ import pandas as pd[m
+ [m
+ from broker.paper_broker import PaperBroker[m
+[32m+[m[32mfrom engine.order_request import OrderRequest[m
+ from engine.signal_to_order import SignalToOrder[m
+ from engine.strategy_engine import StrategyEngine[m
+[32m+[m[32mfrom risk.risk_engine import RiskEngine[m
+ from strategy.signal import Signal[m
+ [m
+ [m
+[36m@@ -15,6 +19,7 @@[m [mclass TradingEngine:[m
+         strategy_engine: StrategyEngine,[m
+         broker: PaperBroker,[m
+         signal_to_order: SignalToOrder | None = None,[m
+[32m+[m[32m        risk_manager: RiskEngine | None = None,[m
+     ) -> None:[m
+ [m
+         self.strategy_engine = strategy_engine[m
+[36m@@ -22,6 +27,7 @@[m [mclass TradingEngine:[m
+         self.signal_to_order = ([m
+             signal_to_order or SignalToOrder()[m
+         )[m
+[32m+[m[32m        self.risk_manager = risk_manager[m
+ [m
+     def run_once([m
+         self,[m
+[36m@@ -31,23 +37,43 @@[m [mclass TradingEngine:[m
+         data: pd.DataFrame,[m
+         quantity: int,[m
+         market_price,[m
+[32m+[m[32m        risk_context: dict | None = None,[m
+     ) -> Signal:[m
+ [m
+[32m+[m[32m        market_price = Decimal(market_price)[m
+[32m+[m
+         signal = self.strategy_engine.run([m
+             strategy_name=strategy_name,[m
+             symbol=symbol,[m
+             data=data,[m
+         )[m
+ [m
+[32m+[m[32m        request = OrderRequest([m
+[32m+[m[32m            symbol=symbol,[m
+[32m+[m[32m            quantity=quantity,[m
+[32m+[m[32m        )[m
+[32m+[m
+         order = self.signal_to_order.convert([m
+             signal,[m
+[31m-            quantity=quantity,[m
+[32m+[m[32m            request,[m
+         )[m
+ [m
+[31m-        if order is not None:[m
+[31m-            self.broker.submit_order([m
+[32m+[m[32m        if order is None:[m
+[32m+[m[32m            return signal[m
+[32m+[m
+[32m+[m[32m        if self.risk_manager is not None:[m
+[32m+[m
+[32m+[m[32m            context = risk_context or {}[m
+[32m+[m
+[32m+[m[32m            self.risk_manager.validate([m
+                 order,[m
+[31m-                market_price=market_price,[m
+[32m+[m[32m                price=market_price,[m
+[32m+[m[32m                **context,[m
+             )[m
+ [m
+[32m+[m[32m        self.broker.submit_order([m
+[32m+[m[32m            order,[m
+[32m+[m[32m            market_price=market_price,[m
+[32m+[m[32m        )[m
+[32m+[m
+         return signal[m
+\ No newline at end of file[m
+[1mdiff --git a/risk/base_risk_rule.py b/risk/base_risk_rule.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..c8ab3ca[m
+[1m--- /dev/null[m
+[1m+++ b/risk/base_risk_rule.py[m
+[36m@@ -0,0 +1,22 @@[m
+[32m+[m[32mfrom __future__ import annotations[m
+[32m+[m
+[32m+[m[32mfrom abc import ABC, abstractmethod[m
+[32m+[m
+[32m+[m[32mfrom broker.order import Order[m
+[32m+[m
+[32m+[m
+[32m+[m[32mclass BaseRiskRule(ABC):[m
+[32m+[m[32m    """[m
+[32m+[m[32m    Base class for all risk rules.[m
+[32m+[m[32m    """[m
+[32m+[m
+[32m+[m[32m    @abstractmethod[m
+[32m+[m[32m    def validate([m
+[32m+[m[32m        self,[m
+[32m+[m[32m        order: Order,[m
+[32m+[m[32m        **context,[m
+[32m+[m[32m    ) -> None:[m
+[32m+[m[32m        """[m
+[32m+[m[32m        Raise ValueError if validation fails.[m
+[32m+[m[32m        """[m
+[32m+[m[32m        ...[m
+\ No newline at end of file[m
+[1mdiff --git a/risk/daily_loss_limiter.py b/risk/daily_loss_limiter.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..0b6b141[m
+[1m--- /dev/null[m
+[1m+++ b/risk/daily_loss_limiter.py[m
+[36m@@ -0,0 +1,32 @@[m
+[32m+[m[32mfrom __future__ import annotations[m

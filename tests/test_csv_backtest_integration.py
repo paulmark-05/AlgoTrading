@@ -39,14 +39,15 @@ def test_csv_to_backtest_engine_noop_strategy():
         trading_engine=trading_engine,
     )
 
-    processed = backtest.run(
+    result = backtest.run(
         strategy_name="NoOpStrategy",
         symbol="NIFTY",
         data=data,
         quantity=10,
     )
 
-    assert processed == len(data)
+    assert result.bars_processed == len(data)
+    assert len(result.performance) == len(data)
     assert len(broker.order_book) == 0
     assert len(broker.trade_book) == 0
     assert broker.cash == Decimal("100000")

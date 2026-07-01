@@ -6,7 +6,9 @@ from decimal import Decimal
 from broker.enums import OrderSide
 from broker.trade import Trade
 from broker.trade_book import TradeBook
-
+from dataclasses import dataclass
+from datetime import datetime
+from decimal import Decimal
 
 @dataclass(frozen=True, slots=True)
 class ClosedTrade:
@@ -17,6 +19,9 @@ class ClosedTrade:
     gross_pnl: Decimal
     commission: Decimal
     net_pnl: Decimal
+
+    entry_time: datetime | None = None
+    exit_time: datetime | None = None
 
     @property
     def is_winner(self) -> bool:

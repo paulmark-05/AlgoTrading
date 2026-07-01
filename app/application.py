@@ -1,30 +1,19 @@
-from broker.paper_broker import PaperBroker
-from data.market_data_service import MarketDataService
-from core.portfolio import Portfolio
+from __future__ import annotations
 
-from strategy.strategy_manager import StrategyManager
-from strategy.nifty_5m_bazooka.strategy import Nifty5MBazooka
+from dataclasses import dataclass
 
-class Application:
+from config.trading_config import TradingConfig
+from engine.backtest_engine import BacktestEngine
 
-    def __init__(self, config):
 
-        self.config = config or {}
+@dataclass(slots=True)
+class TradingApplication:
+    """
+    Root application object.
 
-        self.broker = PaperBroker()
+    Owns the configured trading system.
+    """
 
-        self.market_data = MarketDataService()
+    config: TradingConfig
 
-        self.portfolio = Portfolio()
-
-    def start(self):
-
-        print("=" * 60)
-        print("TRADING PLATFORM STARTING")
-        print("=" * 60)
-
-        self.broker.connect()
-
-        self.market_data.connect()
-
-        print("Platform Ready")
+    backtest: BacktestEngine
